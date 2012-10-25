@@ -74,6 +74,11 @@ class WebkitLoad (Foundation.NSObject, WebKit.protocols.WebFrameLoadDelegate):
                 print "--md5 requires python md5 library"
                 AppKit.NSApplication.sharedApplication().terminate_(None)
          filename = md5.new(URL).hexdigest()
+       elif options.filenameonly:
+         filename = URL.split('/')[-1]
+         #removing %20 as well as other non-word characters just to clean up
+         #Helps when dealing with local files run through pathname2url
+         filename = re.sub('\W|20','',filename)
        else:
          filename = re.sub('\W','',URL);
          filename = re.sub('^http','',filename);
@@ -262,6 +267,8 @@ Examples:
        metavar="NAME", help="save images as NAME-full.png,NAME-thumb.png etc")
     group.add_option("-m", "--md5", action="store_true",
        help="use md5 hash for filename (like del.icio.us)")
+    group.add_option("--filenameonly", action="store_true",
+       help="save using the input filename only, don't include the domain or directory: This can result in an empty filename if the url ends in a forward-slash")
     group.add_option("-d", "--datestamp", action="store_true",
        help="include date in filename")
     cmdparser.add_option_group(group)
