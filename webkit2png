@@ -28,6 +28,9 @@ __version__ = "0.6 beta"
 
 import sys
 import optparse
+import re
+import os
+import urllib
 
 try:
   import Foundation
@@ -72,7 +75,6 @@ class WebkitLoad (Foundation.NSObject, WebKit.protocols.WebFrameLoadDelegate):
                 AppKit.NSApplication.sharedApplication().terminate_(None)
          filename = md5.new(URL).hexdigest()
        else:
-         import re
          filename = re.sub('\W','',URL);
          filename = re.sub('^http','',filename);
        if options.datestamp:
@@ -131,6 +133,11 @@ class WebkitLoad (Foundation.NSObject, WebKit.protocols.WebFrameLoadDelegate):
                 url = self.urls.pop(0)
         else:
             AppKit.NSApplication.sharedApplication().terminate_(None)
+            
+        #if the url doesn't have a recognisable scheme, attempt to treat as a file
+        if not re.search(r'^(http|ftp|https|file)://', url):
+            url = 'file://' + urllib.pathname2url(os.path.abspath(url))
+            
         print "Fetching", url, "..."
         self.resetWebview(webview)
         webview.mainFrame().loadRequest_(Foundation.NSURLRequest.requestWithURL_(Foundation.NSURL.URLWithString_(url)))
@@ -208,6 +215,7 @@ Examples:
 %prog -TF http://google.com/        # just thumbnail and fullsize grab
 %prog -o foo http://google.com/     # save images as "foo-thumb.png" etc
 %prog -                             # screengrab urls from stdin
+%prog *.html                        # screengrab from local html files
 %prog -h | less                     # full documentation"""
 
     cmdparser = optparse.OptionParser(usage,version=("webkit2png "+__version__))
